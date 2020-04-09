@@ -5,7 +5,6 @@ Sensirion SFM3200 FLOW SENSOR
  This library is compatible with the Arduino IDE.
 
 
-
 ## Datasheet
  Sensirion  
  SFM3200-250-AW, digital dlow deter for medical applications such as ventilators
