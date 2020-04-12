@@ -1,11 +1,9 @@
 /**
+	sfm3200.cpp
 
-sfm3200.cpp
-
-@author: Will Patton: https://github.com/willpatton
-@date: April 7, 2020
-@license: MIT
-
+	@author: Will Patton: https://github.com/willpatton
+	@date: April 7, 2020
+	@license: MIT
 */
 
 #include "Arduino.h"
@@ -13,114 +11,112 @@ sfm3200.cpp
 #include "sfm3200.h"
 
 
-/*
- begin SFM3200
+/*!
+	@brief  Begin SFM3200
  */
 void sfm3200::begin()
 {	
-	//ensure a 100ms delay since power-on (required)
-	delay(100);
+	//ensure a 100ms delay since power-on
+	//delay(100);
 
     //read serial number
-	flowReadSN();
+	//readSernum();
+
+	//soft reset used to flush buffers
+	//flowReset();
+	//delay(500);
 
 	//write measurement command
-	//this command will 
-    flowSendMeasCmd();		
+	//chip shall remain in measurement command forever unless overwritten by another command
+    sendMeasCmd();		
 	delayMicroseconds(500);
 
-	//read 1st measurement data and discard (1st reading is assumed invalid)
-  	flowReadMeas();				      
+	//send measurement cmd, then read 1st measurement data and discard (1st reading is assumed invalid)
+  	readFlow();				      
     delayMicroseconds(500);
 
-    //read 2nd measure data, it should be valid
-    flowReadMeas();
+    //send measurement cmd, then read 2nd measure data, it should be valid
+    readFlow();
 
     //SFM3200
     //FYI - chip will remain in the measurement command mode until overwritten by another command
 }
 
 
-/*
-send measurement command
+/*!
+	 @brief  Send the 16-bit measurement command
 */
-void sfm3200::flowSendMeasCmd(){
-	Wire.beginTransmission(FLOW_I2C_ADDR); 	// send address, ACK
-	Wire.write(FLOW_CMD_START>>8);      	// write 16-bit command	ACK
-	Wire.write(FLOW_CMD_START & 0xFF);      //						ACK
-	Wire.endTransmission();				
+void sfm3200::sendMeasCmd(){
+	Wire.beginTransmission((uint8_t)SFM3200_ADDR); 	// send 7-bit address + write bit=0, ACK
+	Wire.write((uint8_t)CMD_MEASURE >> 8);      	// write command MSB, ACK
+	Wire.write((uint8_t)CMD_MEASURE);     			//	  "		"    LSB, ACK
+	Wire.endTransmission();				 
 }
 
 
-/* 
- read flow measurement
- assumes measurement command was previously sent
+/*! 
+ 	@brief  Read the 16-bit flow measurement
+	assumes measurement command was previously sent
+ 	this chip will likely return 0xFFFF if its locked-up or not ready(invalid).
 */
-uint16_t sfm3200::flowReadMeas()
+uint16_t sfm3200::readFlow()
 {
-    uint8_t meas[2];							//measurement data array
-    uint16_t * ptr_meas = (uint16_t) meas;		//16-bit pointer
-	uint8_t crc;								
+    uint16_t flow;							//measurement: flow data.
+	uint8_t crc;							//data CRC
 	
-    //flowSendMeasCmd();							//optionally, comment this line if only reading forever
+	//COMMAND
+	//send measurement command optional if already in measurement mode
+    //sendMeasCmd();							
     //delayMicroseconds(200);
 
-	Wire.requestFrom(FLOW_I2C_ADDR, 3);  		//send addr and request 3-bytes, ACK
-	meas[1] = Wire.read();					    //read MSB, ACK
-	meas[0] = Wire.read(); 					    //read LSB, ACK
-	crc 	= Wire.read();						//read CRC, NACK
-	//Wire.endTransmission();
-	delayMicroseconds(200);			  	
+    //DATA
+	Wire.requestFrom(SFM3200_ADDR, 3);  	//send 7-bit addr + read bit=1 and request 3-bytes, ACK
+	flow = (uint16_t)(Wire.read() << 8 | (Wire.read() )); 	//read 16-bit: MSB +ACK, then LSB + ACK
+	crc = (uint8_t)Wire.read();								//read CRC, NACK	
+	//CRC - discarded  	
 
-	this->measurement =  *ptr_meas;				//pointer indirection to 16-bit value
-	return  this->measurement;
+	return flow;
 }
 
 
-/*
-Read the 4-byte serial number
+/*!
+	 @brief  Read the 32-bit serial number
 */
-uint32_t sfm3200::flowReadSN()
+uint32_t sfm3200::readSernum()
 {
-	
-	uint8_t crcMSB, crcLSB;
-  	uint8_t sn[4];							//serial number array
-  	uint32_t *ptr_sn = (uint32_t) sn;		//32-bit pointer
-  	uint32_t retval = 0;
+  	uint32_t sernum;						//serial number
+  	uint8_t crcH, crcL;						//CRC for high and low 16-bit word read
 
   	//COMMAND
-	Wire.beginTransmission(FLOW_I2C_ADDR);	//send addr, ACK
-	Wire.write(FLOW_CMD_READ_SN>>8);		//write command MSB, ACK
-	Wire.write(FLOW_CMD_READ_SN & 0xFF);	//  "   "		LSB, ACK
+	Wire.beginTransmission((uint8_t)SFM3200_ADDR);	//send 7-bit addr + write bit=0, ACK
+	Wire.write((uint8_t)CMD_SERNUM >> 8);			//write command MSB, ACK
+	Wire.write((uint8_t)CMD_SERNUM);				//  "   "		LSB, ACK
 	Wire.endTransmission();
 	delayMicroseconds(500);
 	
 	//DATA
-	Wire.requestFrom(FLOW_I2C_ADDR, 6);  	//send addr and request 6-bytes (two frames of 8 bits)
-	sn[3]   = Wire.read();    				//MSB, ACK
- 	sn[2]   = Wire.read();    				//   , ACK
-	crcMSB  = Wire.read();    				//CRC MSB, ACK
-	sn[1]   = Wire.read();    				//   , ACK
-	sn[0]   = Wire.read();    				//LSB, ACK
-	crcLSB  = Wire.read();    				//CRC LSB, NACK
-	//Wire.endTransmission();
-    //delayMicroseconds(500);
+	Wire.requestFrom(SFM3200_ADDR, 6);  	//send 7-bit addr + read bit=1 and request 6-bytes (2 frames of 3-bytes each)
+	sernum = (uint32_t)(Wire.read() << 8 | (Wire.read() ));  	//MSB BYTE3 +ACK, BYTE2 +ACK 
+	crcH = (uint8_t)Wire.read();    							//CRC high word, ACK
+	sernum  = (uint32_t)(sernum << 8 | Wire.read() << 8 | (Wire.read() )); 	//BYTE1 +ACK, LSB BYTE0 +ACK 
+	crcL  = (uint8_t)Wire.read();    							//CRC low word, NACK
+	//CRC - discarded
 
-    this->sernum = *ptr_sn;				    //save to this object
-	return this->sernum;
+	return sernum;
 }
 
 
-/*
-soft reset command
+/*!
+	@brief  Send the 16-bit soft reset command
+	this command only flushes the status registers
+	this command will not reset the chip if it is locked-up
 */
-void sfm3200::flowReset()
+void sfm3200::reset()
 {
-	Wire.beginTransmission(FLOW_I2C_ADDR);	//send addr, ACK
-	Wire.write(FLOW_CMD_RESET>>8);			//write command MSB, ACK
-	Wire.write(FLOW_CMD_RESET & 0xFF);		//  "   "		LSB, ACK
-	Wire.endTransmission();				    //
-    //delayMicroseconds(500);
+	Wire.beginTransmission((uint8_t)SFM3200_ADDR);	//send 7-bit addr + write bit=0, ACK
+	Wire.write((uint8_t)CMD_RESET >> 8);			//write command MSB, ACK
+	Wire.write((uint8_t)CMD_RESET);					//  "   "		LSB, ACK
+	Wire.endTransmission();				    
 }
 
 

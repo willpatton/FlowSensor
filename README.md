@@ -1,11 +1,11 @@
 Sensirion SFM3200 FLOW SENSOR
 ===========
- An Arduino library that interfaces with the Sensirion SFM3200-250 flow sensor (or equivalent) using I2C
+ This library/driver interfaces with the Sensirion SFM3200-250 flow sensor (or equivalent) using I2C.
 
  This library is compatible with the Arduino IDE.
 
 
-## Datasheet
+## About the SFM3200
  Sensirion  
  SFM3200-250-AW, digital dlow deter for medical applications such as ventilators
 
@@ -16,4 +16,4 @@ Sensirion SFM3200 FLOW SENSOR
  https://github.com/willpatton/
 
 ## License
- Copyright (c) 2020 Will Patton. MIT License.
+ MIT License.

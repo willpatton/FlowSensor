@@ -18,16 +18,13 @@
  * I2C INTERFACE DOC
  * https://www.sensirion.com/fileadmin/user_upload/customers/sensirion/Dokumente/5_Mass_Flow_Meters/Application_Notes/Sensirion_Mass_Flo_Meters_SFM3xxx_I2C_Functional_Description.pdf
  * 
- * 
- * I2C
- * This I2C device is typically on a 1M cable.  I2C should not be longer that 10cm. 
- * A cap/cable range extender will be required.
+ * This device's wiring should not be longer than 30 cm. A cap/cable range extender may be required for signal integrity.
  * 
  */
 
 #include <Arduino.h>
 #include <Wire.h>
-#include "sfm3200.h"      //library for Sensirion SFM3200-250-AW flow sensor
+#include "sfm3200.h"      //driver for Sensirion SFM3200-250-AW flow sensor
 
 //DISPLAY or PLOT value
 #define DISPLAY false
@@ -37,7 +34,7 @@
 sfm3200 sfm;
   
 //FLOW SENSOR
-#define ADDR = 0x40       //0x40 is address 64
+#define ADDR = 0x40           //0x40 is address 64
 uint16_t flow = 0;
 
 
@@ -52,13 +49,13 @@ void setup()
   delay(1000);                //serial delay
 
   //I2C
-  Wire.begin();               // join i2c bus (address optional for master)
+  Wire.begin();               // begin i2c bus (address optional for master)
   
   //FLOW SENSOR
   sfm.begin();                //initialize flow sensor
   if(DISPLAY){
     Serial.print("SFM3200 serial number: ");    //Show serial number
-    Serial.println(sfm.flowReadSN(), HEX);
+    Serial.println(sfm.readSernum(), HEX);
   }
 }
 
@@ -69,11 +66,11 @@ void loop()
 {
   
   //READ FLOW SENSOR
-  flow = sfm.flowReadMeas();
+  flow = sfm.readFlow();
 
   //DISPLAY or PLOT
   Serial.println(flow);
 
-  delay(5);                   //loop, not too fast!
+  delay(10);                   //loop, not too fast!
 
 }
