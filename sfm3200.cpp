@@ -81,7 +81,7 @@ uint32_t sfm3200::readSernum()
   	//COMMAND
 	Wire.beginTransmission((uint8_t)SFM3200_ADDR);	//send 7-bit addr + write bit=0, ACK
 	Wire.write((uint8_t)(CMD_SERNUM >> 8));			//write command MSB, ACK
-	Wire.write((uint8_t)CMD_SERNUM & 0xFF);		    //  "   "		LSB, ACK
+	Wire.write((uint8_t)CMD_SERNUM);		    	//  "   "		LSB, ACK
 	Wire.endTransmission();
 	delayMicroseconds(500);
 	
@@ -106,7 +106,7 @@ void sfm3200::reset()
 {
 	Wire.beginTransmission((uint8_t)SFM3200_ADDR);	//send 7-bit addr + write bit=0, ACK
 	Wire.write((uint8_t)(CMD_RESET >> 8));			//write command MSB, ACK
-	Wire.write((uint8_t)CMD_RESET & 0xFF);			//  "   "		LSB, ACK
+	Wire.write((uint8_t)CMD_RESET);					//  "   "		LSB, ACK
 	Wire.endTransmission();				    
 }
 
