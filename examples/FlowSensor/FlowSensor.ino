@@ -1,5 +1,4 @@
 /**
- * 
  * @author: Will Patton https://github.com/willpatton
  * @date:   April 9, 2020
  * @license: MIT

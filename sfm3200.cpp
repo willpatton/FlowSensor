@@ -20,16 +20,8 @@ void sfm3200::begin()
 	//delay(100);
 
     //read serial number
-	//readSernum();
-
-	//soft reset used to flush buffers
-	//flowReset();
-	//delay(500);
-
-	//write measurement command
-	//chip shall remain in measurement command forever unless overwritten by another command
-    sendMeasCmd();		
-	delayMicroseconds(500);
+	readSernum();
+    delayMicroseconds(500);
 
 	//send measurement cmd, then read 1st measurement data and discard (1st reading is assumed invalid)
   	readFlow();				      
@@ -44,11 +36,11 @@ void sfm3200::begin()
 
 
 /*!
-	 @brief  Send the 16-bit measurement command
+	 @brief  Send the 16-bit measurement command, only
 */
 void sfm3200::sendMeasCmd(){
 	Wire.beginTransmission((uint8_t)SFM3200_ADDR); 	// send 7-bit address + write bit=0, ACK
-	Wire.write((uint8_t)CMD_MEASURE >> 8);      	// write command MSB, ACK
+	Wire.write((uint8_t)(CMD_MEASURE >> 8));      	// write command MSB, ACK
 	Wire.write((uint8_t)CMD_MEASURE);     			//	  "		"    LSB, ACK
 	Wire.endTransmission();				 
 }
@@ -65,9 +57,8 @@ uint16_t sfm3200::readFlow()
 	uint8_t crc;							//data CRC
 	
 	//COMMAND
-	//send measurement command optional if already in measurement mode
-    //sendMeasCmd();							
-    //delayMicroseconds(200);
+    sendMeasCmd();							
+    delayMicroseconds(200);					//required.  120us too fast and occassionally put out spikes of 0xFFFF
 
     //DATA
 	Wire.requestFrom(SFM3200_ADDR, 3);  	//send 7-bit addr + read bit=1 and request 3-bytes, ACK
@@ -89,8 +80,8 @@ uint32_t sfm3200::readSernum()
 
   	//COMMAND
 	Wire.beginTransmission((uint8_t)SFM3200_ADDR);	//send 7-bit addr + write bit=0, ACK
-	Wire.write((uint8_t)CMD_SERNUM >> 8);			//write command MSB, ACK
-	Wire.write((uint8_t)CMD_SERNUM);				//  "   "		LSB, ACK
+	Wire.write((uint8_t)(CMD_SERNUM >> 8));			//write command MSB, ACK
+	Wire.write((uint8_t)CMD_SERNUM & 0xFF);		    //  "   "		LSB, ACK
 	Wire.endTransmission();
 	delayMicroseconds(500);
 	
@@ -114,8 +105,8 @@ uint32_t sfm3200::readSernum()
 void sfm3200::reset()
 {
 	Wire.beginTransmission((uint8_t)SFM3200_ADDR);	//send 7-bit addr + write bit=0, ACK
-	Wire.write((uint8_t)CMD_RESET >> 8);			//write command MSB, ACK
-	Wire.write((uint8_t)CMD_RESET);					//  "   "		LSB, ACK
+	Wire.write((uint8_t)(CMD_RESET >> 8));			//write command MSB, ACK
+	Wire.write((uint8_t)CMD_RESET & 0xFF);			//  "   "		LSB, ACK
 	Wire.endTransmission();				    
 }
 
