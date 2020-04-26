@@ -7,7 +7,7 @@ Sensirion SFM3200 FLOW SENSOR
 
 ## About the SFM3200
  Sensirion  
- SFM3200-250-AW, digital dlow deter for medical applications such as ventilators
+ SFM3200-250-AW, digital flow meter for medical applications such as ventilators
 
  Sensirion SFM3200 I2C INTERFACE DOC
  https://www.sensirion.com/fileadmin/user_upload/customers/sensirion/Dokumente/5_Mass_Flow_Meters/Application_Notes/Sensirion_Mass_Flo_Meters_SFM3xxx_I2C_Functional_Description.pdf
